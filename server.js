@@ -1,3 +1,4 @@
+require('dotenv').config(); // Add this at the top to load environment variables
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -17,20 +18,40 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-const MONGODB_URI = "mongodb+srv://asad786mehar786:m8XYe2fIz75TErhX@cluster0.lso7n.mongodb.net/fire_aed_inspection";
+const MONGODB_URI = process.env.MONGODB_URI;
+
+const connectOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+};
 
 const connectWithRetry = () => {
-  mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-    console.log('Retrying connection in 5 seconds...');
-    setTimeout(connectWithRetry, 5000);
-  });
+  mongoose.connect(MONGODB_URI, connectOptions)
+    .then(() => console.log('MongoDB connected successfully'))
+    .catch((err) => {
+      console.error('MongoDB connection error:', err);
+      console.log('Retrying connection in 5 seconds...');
+      setTimeout(connectWithRetry, 5000);
+    });
 };
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected. Attempting to reconnect...');
+  connectWithRetry();
+});
+
+process.on('SIGINT', () => {
+  mongoose.connection.close(() => {
+    console.log('MongoDB connection closed through app termination');
+    process.exit(0);
+  });
+});
 
 connectWithRetry();
 

@@ -1,3 +1,4 @@
+//Device.js model
 const mongoose = require('mongoose');
 const qrcode = require('qrcode');
 
@@ -40,25 +41,20 @@ const DeviceSchema = new mongoose.Schema({
     type: Date
   },
   photos: [{
-    type: String
+    type: String  // URL or path to the photo
   }],
   documents: [{
-    type: String
-  }],
-  lastInspectionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Inspection'
-  }
+    type: String  // URL or path to the document
+  }]
 }, { timestamps: true });
 
 DeviceSchema.pre('save', async function(next) {
-  if (this.isNew || this.isModified('serialNumber') || this.isModified('lastInspectionId')) {
+  if (this.isNew || this.isModified('serialNumber')) {
     try {
       const qrCodeData = JSON.stringify({
         id: this._id,
         serialNumber: this.serialNumber,
-        type: this.type,
-        lastInspectionId: this.lastInspectionId
+        type: this.type
       });
       this.qrCode = await qrcode.toDataURL(qrCodeData);
     } catch (error) {

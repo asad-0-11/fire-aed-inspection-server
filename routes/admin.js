@@ -40,7 +40,9 @@ router.get('/public/document/:inspectionId/:documentId', async (req, res) => {
     console.error('Error serving public document:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
-});router.get('/completed-inspections', async (req, res) => {
+});
+
+router.get('/completed-inspections', async (req, res) => {
   try {
     const completedInspections = await Inspection.find({ status: 'Completed' })
       .populate('device', 'serialNumber location type')
